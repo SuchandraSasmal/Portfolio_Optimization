@@ -1,0 +1,319 @@
+---
+title: "gsdg"
+output: html_document
+date: "2023-07-04"
+---
+
+```{r setup, include=FALSE}
+library(rugarch)
+library(fGarch)
+
+#APARCH(2,1)
+spec3 <- garchSpec(model = list(mu = 1.0e-4, omega = 1.0e-6, 
+       alpha = c(0.10, 0.05), gamma = c(0, 0), beta = 0.8, delta = 1.8, 
+       shape = 4, skew = 0.85), cond.dist = "sstd")
+fit1 <- garchSim(spec3, n=100)
+
+#ARCH(2)
+spec3 <- garchSpec(model = list(alpha = c(0.2, 0.4), beta = 0))
+fit2 <- garchSim(spec3,n=100)
+
+#GARCH(1,1)
+spec3 <- garchSpec(model = list(omega = 1e-6, alpha = 0.1, beta = 0.8))
+fit3 <- garchSim(spec3,n=100)
+
+#ARMA(1,2)-GARCH(1,1)
+spec3 <- garchSpec(model = list(ar = 0.5, ma = c(0.3, -0.3)))  
+fit4 <- garchSim(spec3,n=100)
+
+x <- matrix(0,10,100)
+for(i in 1:10)
+{
+  spec3 <- garchSpec(model = list(mu = 1.0e-4, omega = 1.0e-6, 
+       alpha = c(0.10, 0.05), gamma = c(0, 0), beta = 0.8, delta = 1.8, 
+       shape = 4, skew = 0.85), cond.dist = "sstd")
+  fit1 <- garchSim(spec3, n=100)
+  x[i,] <- fit1$garch
+}
+y <- matrix(0,10,100)
+for(i in 1:10)
+{
+  spec3 <- garchSpec(model = list(alpha = c(0.2, 0.4), beta = 0))
+  fit2 <- garchSim(spec3,n=100)
+  y[i,] <- fit2$garch
+}
+
+#ARMA(2,2)
+z <- matrix(0,10,100)
+for(i in 1:10)
+{
+  spec3 <- garchSpec(model = list(omega = 1e-6, alpha = 0.1, beta = 0.8))
+  fit3 <- garchSim(spec3,n=100)
+  z[i,] <- fit3$garch
+}
+
+
+m <- rbind(x,y,z) 
+#each column is a time series of length 300
+spec = garchSpec(model = list(omega = 1e-6, alpha = 0.1, beta = 0.8))
+b  <- garchSim(spec, n = 100) 
+x <- b$garch
+class(x)
+for(i in 1:9)
+{
+  a <- garchSim(spec, n = 100)  
+  x <- cbind(x,a$garch)
+}
+
+#AR(1)
+y <- matrix(0,100,10)
+for(i in 1:10)
+{
+  y[,i] <- arima.sim(list(order = c(1,0,0), ar = 0.7), n = 100) 
+}
+
+#ARMA(2,2)
+z <- matrix(0,100,10)
+for(i in 1:10)
+{
+  z[,i] <- arima.sim(list(order=c(2,0,2),ar=c(0.2,0.4),ma=c(0.3,0.6)),n=100)
+}
+
+m <- as.matrix(cbind(x,y,z))
+c <- cov(m)
+c[is.na(c)] <- 0
+
+```
+
+```{r next114}
+newfunc <- function(n,p,c,gamma)
+{
+   gam <- gamma
+   theta2 <- list()
+   mat2 <- list()
+   for(n in 1:c)
+   {
+     
+      n2 <- which(grpnew==n)
+      if(length(n2) != 1)
+      {
+        tol <- 1e-5
+        distance <- 1 + tol
+        iter <- 0 
+
+        value1 <- t(value) 
+        val <- value1[,n2]
+        matfull <- function(prev)
+  {
+  b <- 0
+  x <- numeric()
+  for(i in 1:(ncol(val)-1))
+  {
+  
+    a <- b+1
+    
+    b <- a+(ncol(val)-i)-1
+    
+    x <- rbind(x,c(rep(0,i-1),rep(1,1),prev[a:b]))
+  }
+  x <- rbind(x,c(rep(0,ncol(val)-1),rep(1,1)))
+  return(x)
+}
+        Y1 <- numeric()
+        current11 <- numeric()
+for(i in 1:ncol(val))
+{
+  current11[i] <- 1/var(val[,i])   #initial value of sigma
+  Y1 <- c(Y1,val[,i]*as.numeric(sqrt(current11[i])))
+}
+  
+X1 <- numeric()
+for(i in 1:ncol(val))
+{
+  for(j in 1:ncol(val))
+  {
+    if(i < j)
+    {
+      aer <- c(rep(0,(i-1)*nrow(val)),val[,j]*as.numeric(sqrt(current11[j])),
+                 rep(0,(j-i-1)*nrow(val)),val[,i]*as.numeric(sqrt(current11[i])),
+                 rep(0,(ncol(val)-j)*nrow(val)))
+        X1 <- cbind(X1,aer)
+    }
+    else
+    {
+      X1 <- X1
+    }
+  }
+}
+  
+
+theta41 <- theta4(Y1,X1,gamma=gam)   #initial value of theta
+  
+while(distance > tol)
+  {
+    iter <- iter + 1
+  
+    previous <- current11
+    prev <- theta41
+    
+    matnew <- matfull(prev)
+    
+    be <- matrix(-1,nrow(matnew),ncol(matnew))
+    for(i in 1:nrow(matnew))
+    {
+      for(j in 1:ncol(matnew))
+      {
+        if(i<j)
+        {
+          be[i,j] <- matnew[i,j]*as.numeric(sqrt(previous[j]/previous[i]))
+        }
+        else if(i > j)
+        {
+          be[i,j] <- matnew[j,i]*as.numeric(sqrt(previous[j]/previous[i]))
+        }
+        else
+        {
+          be[i,j] <- -1
+        }
+      }
+    
+    }
+    
+    ben <- t(-be)
+    for(i in 1:nrow(be))
+    {
+      sum <- 0
+      for(j in 1:ncol(be))
+      {
+        if(j != i)
+        {
+          sum = sum+be[i,j]%*%val[,j]
+        }
+        else
+          sum = sum
+      }
+      current11[i] <- nrow(val)/(norm(val[,i] - sum,"2"))^2
+    }
+    Y1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      Y1 <- c(Y1,val[,i]*as.numeric(sqrt(current11[i])))
+    }
+    X1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      for(j in 1:ncol(val))
+      {
+        if(i < j)
+        {
+          aer <- c(rep(0,(i-1)*nrow(val)),val[,j]*as.numeric(sqrt(current11[j])),
+                   rep(0,(j-i-1)*nrow(val)),val[,i]*as.numeric(sqrt(current11[i])),
+                   rep(0,(ncol(val)-j)*nrow(val)))
+          X1 <- cbind(X1,aer)
+        }
+        else
+        {
+          X1 <- X1
+        }
+      }
+    }
+    theta41 <- theta4(Y1,X1,gamma=gam)
+    distance <- norm(previous - current11,"2")
+}
+theta2[[n]] <- theta41
+mat2[[n]] <- matfull3(n,theta2[[n]]) + matfull4(n,theta2[[n]])
+  }
+else
+{
+  theta2[[n]] <- 1
+  mat2[[n]] <- as.matrix(1)
+}
+
+}
+
+n <- numeric()
+new <- list()
+sum <- rep(0,c)
+for(i in 1:c)
+{
+  n[i] <- length(which(grpnew==i))
+  sum[i] <- sum[i] + sum(n[1:i])
+}
+  
+
+new[[1]] <- cbind(mat2[[1]],matrix(0,n[1],p-n[1]))
+for(i in 2:c)
+{
+new[[i]] <- cbind(matrix(0,n[i],sum[i-1]),mat2[[i]],matrix(0,n[i],p-sum[i-1]-n[i]))
+  
+}
+omega11 <- numeric()
+for(i in 1:c)
+{
+  omega11 <- rbind(omega11,new[[i]])
+}
+
+new2 <- numeric()
+for(i in 1:c)
+{
+  new2 <- c(new2,rep(median(theta2[[i]]),ncol(mat2[[i]])))
+}
+omega21 <- diag(new2)
+
+new3 <- numeric()
+for(i in 1:c)
+{
+  new3 <- c(new3,median(theta2[[i]]))
+}
+omega31 <- diag(new3)
+
+Sigmaest <-solve(omega11)
+
+alphaf <- ((t(matrix(1,nrow(value),1))%*%omega11%*%matrix(1,nrow(value),1)))/p
+wgtf <- (omega11%*%matrix(1,nrow(value),1))
+weif <- wgtf/(p*as.numeric(alphaf))
+Sigma1 <- matrix(0,p,p)
+  for(i in 1:p)
+  {
+    for(j in 1:p)
+    {
+      Sigma1[i,j] <- 0.15^abs(i-j)
+    }
+  }
+omegat <- solve(Sigma1)
+alphat <- ((t(matrix(1,nrow(value),1))%*%omegat%*%matrix(1,nrow(value),1)))/p
+wgtft <- (omegat%*%matrix(1,nrow(value),1))
+weift <- wgtft/(p*as.numeric(alphat)) 
+
+
+varest1 <- abs(((t(weif)%*%Sigmaest%*%weif)/(t(weift)%*%Sigma1%*%weift))-1)
+varest1
+#risk estimation error
+riskest1 <- abs(t(weif)%*%(Sigmaest-Sigma1)%*%weif)
+riskest1
+#portfolio weight estimation error
+portest1 <- norm(weift-weif,"1")
+portest1
+
+return(c(varest1,  portest1, riskest1))
+#print("2nd type" : varest2, riskest2, portest2)
+
+}
+
+value <- t(m)
+fviz_nbclust(scale(value), kmeans, method = "silhouette",k.max=20)
+
+distnew <- diss(value,METHOD="PACF")     
+hcnew <- hclust(distnew)
+grpnew <- cutree(hcnew, k = 25)
+table(grpnew)
+c <- 25
+n <- 100
+p <- 30
+newfunc(n,p,c,gamma=0.05)
+newfunc(n,p,c,gamma=0.5)
+newfunc(n,p,c,gamma=5)
+newfunc(n,p,c,gamma=15)
+newfunc(n,p,c,gamma=25)
+newfunc(n,p,c,gamma=100)
+```
