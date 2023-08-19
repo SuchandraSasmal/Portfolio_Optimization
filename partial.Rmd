@@ -1,0 +1,956 @@
+---
+title: "NIFTY-50 Stocks Clustering"
+output: html_document
+date: "2023-06-11"
+---
+
+```{r setup}
+#reading the data files from directory 
+d1 <- read.csv("ADANIENT.NS.csv",header=TRUE)
+d2 <- read.csv("ADANIPORTS.NS.csv",header=TRUE)
+d3 <- read.csv("APOLLOHOSP.NS.csv",header=TRUE)
+d4 <- read.csv("ASIANPAINT.NS.csv",header=TRUE)
+d5 <- read.csv("AXISBANK.NS.csv",header=TRUE)
+d6 <- read.csv("BAJAJ-AUTO.NS.csv",header=TRUE)
+d7 <- read.csv("BAJAJFINSV.NS.csv",header=TRUE)
+d8 <- read.csv("BAJFINANCE.NS.csv",header=TRUE)
+d9 <- read.csv("BHARTIARTL.NS.csv",header=TRUE)
+d10 <- read.csv("BPCL.NS.csv",header=TRUE)
+d11 <- read.csv("BRITANNIA.NS.csv",header=TRUE)
+d12 <- read.csv("CIPLA.NS.csv",header=TRUE)
+d13 <- read.csv("COALINDIA.NS.csv",header=TRUE)
+d14 <- read.csv("DIVISLAB.NS.csv",header=TRUE)
+d15<- read.csv("DRREDDY.NS.csv",header=TRUE)
+d16 <- read.csv("EICHERMOT.NS.csv",header=TRUE)
+d17 <- read.csv("GRASIM.NS.csv",header=TRUE)
+d18 <- read.csv("HCLTECH.NS.csv",header=TRUE)
+d19 <- read.csv("HDFC.NS.csv",header=TRUE)
+d20 <- read.csv("HDFCBANK.NS.csv",header=TRUE)
+d21 <- read.csv("HDFCLIFE.NS.csv",header=TRUE)
+d22 <- read.csv("HEROMOTOCO.NS.csv",header=TRUE)
+d23 <- read.csv("HINDALCO.NS.csv",header=TRUE)
+d24 <- read.csv("HINDUNILVR.NS.csv",header=TRUE)
+d25 <- read.csv("ICICIBANK.NS.csv",header=TRUE)
+d26 <- read.csv("INDUSINDBK.NS.csv",header=TRUE)
+d27 <- read.csv("INFY.NS.csv",header=TRUE)
+d28 <- read.csv("ITC.NS.csv",header=TRUE)
+d29 <- read.csv("JSWSTEEL.NS.csv",header=TRUE)
+d30 <- read.csv("KOTAKBANK.NS.csv",header=TRUE)
+d31 <- read.csv("LT.NS.csv",header=TRUE)
+d32 <- read.csv("MARUTI.NS.csv",header=TRUE)
+d33 <- read.csv("MM.NS.csv",header=TRUE)
+d34 <- read.csv("NESTLEIND.NS.csv",header=TRUE)
+d35 <- read.csv("NTPC.NS.csv",header=TRUE)
+d36 <- read.csv("ONGC.NS.csv",header=TRUE)
+d37 <- read.csv("POWERGRID.NS.csv",header=TRUE)
+d38 <- read.csv("RELIANCE.NS.csv",header=TRUE)
+d39 <- read.csv("SBILIFE.NS.csv",header=TRUE)
+d40 <- read.csv("SBIN.NS.csv",header=TRUE)
+d41 <- read.csv("SUNPHARMA.NS.csv",header=TRUE)
+d42 <- read.csv("TATACONSUM.NS.csv",header=TRUE)
+d43 <- read.csv("TATAMOTORS.NS.csv",header=TRUE)
+d44 <- read.csv("TATASTEEL.NS.csv",header=TRUE)
+d45 <- read.csv("TCS.NS.csv",header=TRUE)
+d46 <- read.csv("TECHM.NS.csv",header=TRUE)
+d47 <- read.csv("TITAN.NS.csv",header=TRUE)
+d48 <- read.csv("ULTRACEMCO.NS.csv",header=TRUE)
+d49 <- read.csv("UPL.NS.csv",header=TRUE)
+d50 <- read.csv("WIPRO.NS.csv",header=TRUE)
+
+names <- c("ADANIENT","ADANIPORTS","APOLLOHOSP","ASIANPAINT","AXISBANK",
+           "BAJAJ-AUTO","BAJAJFINSV",
+           "BAJFINANCE","BHARTIARTL","BPCL","BRITANNIA","CIPLA","COALINDIA",
+           "DIVISLAB","DRREDDY","EICHERMOT","GRASIM","HCLTECH",
+           "HDFC","HDFCBANK","HDFCLIFE",
+           "HEROMOTOCO","HINDALCO","HINDUNILVR","ICICIBANK","INDUSINDBK",
+           "INFY","ITC","JSWSTEEL","KOTAKBANK","LT","MARUTI","MM",
+           "NESTLEIND","NTPC","ONGC","POWERGRID","RELIANCE","SBILIFE","SBIN",
+           "SUNPHARMA","TATACONSUM","TATAMOTORS","TATASTEEL","TCS","TECHM",
+           "TITAN","ULTRACEM","UPL","WIPRO")
+
+datas <- list(d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,d16,d17,d18,d19,d20,
+           d21,d22,d23,d24,d25,d26,d27,d28,d29,d30,d31,d32,d33,d34,d35,d36,d37,d38,
+           d39,d40,d41,d42,d43,d44,d45,d46,d47,d48,d49,d50)
+
+#creating the data matrix to be used for clustering using their daily log returns 
+value <- matrix(0,nrow=nrow(d1)-1,ncol=50)
+for(i in 1:length(datas))
+{
+  datas1 <- datas[[i]]
+  
+  for(j in 1:nrow(datas1)-1)
+  {
+    value[j,i] <- log(datas1[j+1,6]/datas1[j,6])  #calculating daily log returns
+  }
+}
+colnames(value) <- names
+```
+```{r dim}
+dim(value)
+```
+
+```{r dim1}
+head(value)
+```
+
+```{r package}
+library(TSclust)
+library(cluster)
+library(factoextra)
+```
+
+```{r clus}
+#determining number of clusters to be used
+fviz_nbclust(scale(t(value)), kmeans, method = "silhouette",k.max=20)  
+
+
+#kmeans clustering
+k29 <- kmeans(t(value),centers=11)
+table(k29$cluster) 
+fviz_cluster(k29,t(value))
+
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(k29$cluster==i)])  #listing the names of stocks in every cluster
+}
+
+# agglomerative clustering
+dist129 <- diss(t(value),METHOD="EUCL")  
+hc29 <- hclust(dist129)
+grp229 <- cutree(hc29, k = 11)
+table(grp229)
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(grp229==i)])  #listing the names of stocks in every cluster
+}
+
+
+#divisive clustering
+library(cluster)
+dist629 <- diana(t(value),diss=FALSE,metric="euclidean") 
+grp529 <- cutree(dist629,k=11)
+table(grp529)
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(grp529==i)])    #listing the names of stocks in every cluster
+}
+
+
+
+#peridogram clustering
+dist229 <- diss(t(value),METHOD="PER")  
+hc129 <- hclust(dist229)
+grp129 <- cutree(hc129, k = 11)
+table(grp129)
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(grp129==i)])     #listing the names of stocks in every cluster
+}
+
+
+
+#DTW Clustering
+dist329 <- diss(t(value),METHOD="DTWARP")   
+hc229 <- hclust(dist329)
+grp289 <- cutree(hc229, k = 11)
+table(grp289)
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(grp289==i)])    #listing the names of stocks in every cluster
+}
+
+
+#ACF clustering
+dist429 <- diss(t(value),METHOD="ACF")     
+hc329 <- hclust(dist429)
+grp329 <- cutree(hc329, k = 11)
+table(grp329)
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(grp329==i)])     #listing the names of stocks in every cluster
+}
+
+#PACF clustering
+dist529 <- diss(t(value),METHOD="PACF")      
+hc429 <- hclust(dist529)
+grp429 <- cutree(hc429, k = 11)
+table(grp429)
+for(i in 1:11)
+{
+  cat("Cluster :" , i)
+  print(names[which(grp429==i)])     #listing the names of stocks in every cluster
+}
+```
+The next function is an iterative procedure of finding theta, when cluster size is 2,  for a given sigma.
+```{r theta2}
+
+theta2 <- function(Y,X,tol=1e-5,gamma)      #function for final value of theta
+{
+  distance <- tol + 1
+  iter <- 0
+  fubc <- function(Y,X,gamma)        #function for initial value of theta 
+  {
+    a <- t(Y)%*%X
+    if(a > 0)
+    {
+      if((t(Y)%*%X)-gamma>0)
+      {
+        a <- ((t(Y)%*%X)-gamma)/(t(X)%*%X)
+      }
+      else
+      {
+        a <- 0
+      }
+    }
+    else if(a < 0)
+    {
+      if(-(t(Y)%*%X)-gamma>0)
+      {
+        a <- -(-(t(Y)%*%X)-gamma)/(t(X)%*%X)
+      }
+      else
+      {
+        a <- 0
+      }
+    }
+    else
+    {
+      a <- 0
+    }
+    return(a)
+  }
+  theta <- fubc(Y,X,gamma)
+  current <- fubc(Y,X,gamma)
+  while(distance > tol)
+  {
+    iter <- iter + 1
+    
+    previous <- current
+    fun <- function(previous)
+    {
+      if(previous != 0)
+      {
+        b <- ((t(Y-X%*%previous)%*%X)/(t(X)%*%X))+previous
+      }
+      else
+      {
+        b <- ((t(Y)%*%X)/(t(X)%*%X))+previous
+      }
+      return(b)
+    }
+    b <- fun(previous)
+    fu <- function(b)
+    {
+      if(b > 0)
+      {
+        if(abs(b)-(gamma/(t(X)%*%X))>0)
+        {
+          b <- abs(b)-(gamma/(t(X)%*%X))
+        }
+        else
+        {
+          b <- 0
+        }
+      }
+      else if(b < 0)
+      {
+        if(abs(b)-(gamma/(t(X)%*%X))>0)
+        {
+          b <- -(abs(b)-(gamma/(t(X)%*%X)))
+        }
+        else
+        {
+          b <- 0
+        }
+      }
+      else
+      {
+        b <- 0
+      }
+      return(b)
+    }
+    current <- fu(b)
+    distance <- norm(previous-current,"2")
+  }
+  return(current)   #final value of theta
+}
+```
+
+The next function is an iterative procedure of finding theta for a given sigma, when number of stocks in a given cluster is more than 2.
+```{r theta}
+theta3 <- function(Y,X,tol=1e-5,gamma)      #function for final value of theta
+{
+  distance <- tol + 1
+  iter <- 0
+  
+  fubc <- function(Y,X,gamma)        #function for initial value of theta 
+  {
+    a <- t(Y)%*%X
+    if(a > 0)
+    {
+      if(abs(t(Y)%*%X)-gamma>0)
+      {
+        a <- (abs(t(Y)%*%X)-gamma)/(t(X)%*%X)
+      }
+      else
+      {
+        a <- 0
+      }
+    }
+    else if(a < 0)
+    {
+      if(abs(t(Y)%*%X)-gamma>0)
+      {
+        a <- -(abs(t(Y)%*%X)-gamma)/(t(X)%*%X)
+      }
+      else
+      {
+        a <- 0
+      }
+    }
+    else
+    {
+      a <- 0
+    }
+    return(a)
+  }
+  
+  
+  theta <- numeric()
+  
+  for(i in 1:ncol(X))
+  {
+    theta[i] <- fubc(Y,X[,i],gamma)
+  }
+  
+  distance <- tol + 1
+  iter <- 0
+
+  
+  while(distance > tol)
+  {
+    iter <- iter + 1
+    
+    
+    previous <- theta
+    
+    
+  for(i in 1:ncol(X))
+  {
+    i <- 1
+  
+    
+      b <- ((t(Y-X%*%previous)%*%X[,i])/(t(X[,i])%*%X[,i]))+previous[i]
+      fu <- function(b)
+      {
+        if(b > 0)
+        {
+          if(b-(gamma/(t(X[,i])%*%X[,i]))>0)
+          {
+            b <- b-(gamma/(t(X[,i])%*%X[,i]))
+          }
+          else
+          {
+            b <- 0
+          }
+        }
+        else if(b < 0)
+        {
+          if(-b-(gamma/(t(X[,i])%*%X[,i]))>0)
+          {
+            b <- -(-(b)-(gamma/(t(X[,i])%*%X[,i])))
+          }
+          else
+          {
+            b <- 0
+          }
+        }
+        else
+        {
+          b <- 0
+        }
+      }
+      theta[i] <- fu(b)
+    }
+    distance <- norm(previous-theta,"2")
+    distance
+  }
+  return(theta)
+}
+```
+
+
+The following function is used for iterations on sigma and returns the corresponding value of theta when cluster size is 2.
+
+```{r sigma1}
+Reg <- function(cluster,lambda, tol=1e-5)#iterations based on sigma and then returning theta
+{
+  # a value larger than tol
+  
+  n1 <- which(grp429==cluster)
+  y1 <- value[,n1[1]]
+  y2 <- value[,n1[2]]
+  
+  distance1 <- tol + 1
+  iter <- 0
+  
+  current1 <- 1/var(y1)    #initial value of sigma
+  current2 <- 1/var(y2)    #initial value of sigma
+  
+  Y <- c(y1/as.numeric(sqrt(current1)),y2/as.numeric(sqrt(current2)))
+  X <- c(y1*as.numeric(current1/current2),y2*as.numeric(current2/current1))
+  
+  theta1 <- theta2(Y,X,gamma=lambda)
+  while(distance1 > tol)
+  {
+    iter <- iter + 1
+    
+    # MM steps
+    previous1 <- current1
+    previous2 <- current2
+    previ <- c(previous1,previous2)
+    previous3 <- theta1
+    
+    
+    beta12 <- as.numeric(theta1*sqrt(current2/current1))
+    beta21 <- as.numeric(theta1*sqrt(current1/current2))
+    
+    current1 <- length(y1)/(t(y1-(beta12*y2))%*%(y1-(beta12*y2))) #final value of sigma
+    current2 <- length(y1)/(t(y2-(beta21*y2))%*%(y2-(beta21*y2))) #final value of sigma
+    Y <- c(y1/as.numeric(sqrt(current1)),y2/as.numeric(sqrt(current2)))
+    X <- c(y1*as.numeric(current1/current2),y2*as.numeric(current2/current1))
+    theta1 <- theta2(Y,X,gamma=lambda)
+    distance1 <- norm(previ - c(current1,current2),"2")
+  }
+  #returning the last iterate of the
+  final <- theta1
+  ma <- matrix(c(1,final,final,1),2,2)
+  return(ma)    #correlation matrix for 1st cluster
+}
+
+```
+The following function is used for iterations on sigma and returns the corresponding value of theta when cluster size is more than 2.
+
+```{r loss2}
+Reg1 <- function(matr,cluster,gam,tol=1e-5)
+{
+  distance <- 1 + tol
+  iter <- 0 
+  
+  n2 <- which(grp429==cluster) #stocks in cluster 2
+  val <- value[,n2]
+  Y1 <- numeric()
+  current11 <- numeric()
+  for(i in 1:ncol(val))
+  {
+    current11[i] <- 1/var(val[,i])   #initial value of sigma
+    Y1 <- c(Y1,val[,i]/as.numeric(sqrt(current11[i])))
+  }
+  
+  
+  X1 <- numeric()
+  for(i in 1:ncol(val))
+  {
+    for(j in 1:ncol(val))
+    {
+      if(i < j)
+      {
+        aer <- c(rep(0,(i-1)*nrow(val)),val[,i]*as.numeric(current11[i]/current11[j]
+                                                           ),
+                 rep(0,(j-i-1)*nrow(val)),val[,j]*as.numeric(current11[j]/current11[i]),
+                 rep(0,(ncol(val)-j)*nrow(val)))
+        X1 <- cbind(X1,aer)
+      }
+      else
+      {
+        X1 <- X1
+      }
+    }
+  }
+  
+  
+  theta4 <- theta3(Y1,X1,gamma=gam)   #initial value of theta
+  
+  
+  
+  while(distance > tol)
+  {
+    iter <- iter + 1
+  
+    previous <- current11
+    prev <- theta4
+    mat <- matr(prev)
+    be <- matrix(-1,length(n2),length(n2))
+    for(i in 1:ncol(val))
+    {
+      for(j in 1:ncol(val))
+      {
+        if(i!=j)
+        {
+          be[i,j] <- mat[min(i,j),max(i,j)]*sqrt(previous[j]/previous[i])
+        }
+          
+      }
+    
+    }
+    
+    for(i in 1:ncol(val))
+    {
+      current11[i] <- nrow(val)/((t(val%*%(-be[i,])))%*%(val%*%(-be[i,])))
+    }
+    Y1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      Y1 <- c(Y1,val[,i]/as.numeric(sqrt(current11[i])))
+    }
+    X1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      for(j in 1:ncol(val))
+      {
+        if(i < j)
+        {
+          aer <- c(rep(0,(i-1)*nrow(val)),val[,i]*as.numeric(current11[i]/current11[j]),
+                   rep(0,(j-i-1)*nrow(val)),val[,j]*as.numeric(current11[j]/current11[i]),
+                   rep(0,(ncol(val)-j)*nrow(val)))
+          X1 <- cbind(X1,aer)
+        }
+        else
+        {
+          X1 <- X1
+        }
+      }
+    }
+    theta4 <- theta3(Y1,X1,gamma=gam)
+    distance <- norm(previous - current11,"2")
+    }
+    
+  return(theta4)
+  }
+```
+
+Estimating partial correlation matrix for 1st cluster:
+
+```{r cluster1}
+
+  mat1 <- Reg(cluster=1,lambda=0.005)
+  inv1 <- solve(mat1) 
+  round(mat1,3)
+
+```
+
+Estimating partial correlation matrix for 2nd cluster:
+
+```{r cluster2}
+
+  mat23 <- function(prev)
+  {
+  return(rbind(c(rep(1,1),prev[1:9]),c(rep(0,1),rep(1,1),prev[10:17]),
+                 c(rep(0,2),rep(1,1),prev[18:24]),c(rep(0,3),rep(1,1),prev[25:30]),
+                 c(rep(0,4),rep(1,1),prev[31:35]),c(rep(0,5),rep(1,1),prev[36:39]),
+                 c(rep(0,6),rep(1,1),prev[40:42]),c(rep(0,7),rep(1,1),prev[43:44]),
+                 c(rep(0,8),rep(1,1),prev[45]),c(rep(0,9),rep(1,1))))
+  }
+  a2 <- Reg1(mat23,cluster=2,gam=0.005)
+  mat21 <- rbind(c(rep(1,1),a2[1:9]),c(rep(0,1),rep(1,1),a2[10:17]),
+                 c(rep(0,2),rep(1,1),a2[18:24]),c(rep(0,3),rep(1,1),a2[25:30]),
+                 c(rep(0,4),rep(1,1),a2[31:35]),c(rep(0,5),rep(1,1),a2[36:39]),
+                 c(rep(0,6),rep(1,1),a2[40:42]),c(rep(0,7),rep(1,1),a2[43:44]),
+                 c(rep(0,8),rep(1,1),a2[45]),c(rep(0,9),rep(1,1)))
+mat22 <- cbind(c(rep(0,1),a2[1:9]),c(rep(0,2),a2[10:17]),
+                 c(rep(0,3),a2[18:24]),c(rep(0,4),a2[25:30]),
+                 c(rep(0,5),a2[31:35]),c(rep(0,6),a2[36:39]),
+                 c(rep(0,7),a2[40:42]),c(rep(0,8),a2[43:44]),
+                 c(rep(0,9),a2[45]),c(rep(0,10)))
+mat2 <- mat21+mat22
+inv2 <- solve(mat2) 
+round(mat2,3)
+
+```
+
+Estimating partial correlation matrix for 3th cluster:
+
+```{r cluster3}
+mat33 <- function(prev)
+{
+   return(rbind(c(rep(1,1),prev[1:10]),c(rep(0,1),rep(1,1),prev[11:19]),
+                 c(rep(0,2),rep(1,1),prev[20:27]),c(rep(0,3),rep(1,1),prev[28:34]),
+                 c(rep(0,4),rep(1,1),prev[35:40]),c(rep(0,5),rep(1,1),prev[41:45]),
+                 c(rep(0,6),rep(1,1),prev[46:49]),c(rep(0,7),rep(1,1),prev[50:52]),
+                 c(rep(0,8),rep(1,1),prev[53:54]),c(rep(0,9),rep(1,1),prev[55]),
+                 c(rep(0,10),rep(1,1))))
+}
+a3 <- Reg1(mat33,cluster=3,gam=0.005)
+mat31 <- rbind(c(rep(1,1),a3[1:10]),c(rep(0,1),rep(1,1),a3[11:19]),
+                 c(rep(0,2),rep(1,1),a2[20:27]),c(rep(0,3),rep(1,1),a3[28:34]),
+                 c(rep(0,4),rep(1,1),a3[35:40]),c(rep(0,5),rep(1,1),a3[41:45]),
+                 c(rep(0,6),rep(1,1),a3[46:49]),c(rep(0,7),rep(1,1),a3[50:52]),
+                 c(rep(0,8),rep(1,1),a3[53:54]),c(rep(0,9),rep(1,1),a3[55]),
+                 c(rep(0,10),rep(1,1)))
+mat32 <- cbind(c(rep(0,1),a3[1:10]),c(rep(0,2),a3[11:19]),
+                 c(rep(0,3),a2[20:27]),c(rep(0,4),a3[28:34]),
+                 c(rep(0,5),a3[35:40]),c(rep(0,6),a3[41:45]),
+                 c(rep(0,7),a3[46:49]),c(rep(0,8),a3[50:52]),
+                 c(rep(0,9),a3[53:54]),c(rep(0,10),a3[55]),
+                 c(rep(0,11)))
+mat3 <- mat31 + mat32
+inv3 <- solve(mat3) 
+round(mat3,3)
+```
+
+Estimating partial correlation matrix for 4th cluster:
+
+```{r cluster4}
+mat43 <- function(prev)
+{
+  return(rbind(c(rep(1,1),prev[1:2]),c(rep(0,1),rep(1,1),prev[3]),
+                 c(rep(0,2),rep(1,1))))
+}
+a4 <- Reg1(mat43,cluster=4,gam=0.005)
+mat41 <- rbind(c(rep(1,1),a4[1:2]),c(rep(0,1),rep(1,1),a4[3]),
+                 c(rep(0,2),rep(1,1)))
+mat42 <- cbind(c(rep(0,1),a4[1:2]),c(rep(0,2),a4[3]),
+                 c(rep(0,3)))
+mat4 <- mat41+mat42
+inv4 <- solve(mat4) 
+round(mat4,3)
+```
+
+Estimating partial correlation matrix for 5th cluster:
+
+```{r cluster5}
+mat53 <- function(prev)
+{
+  return(rbind(c(rep(1,1),prev[1:7]),c(rep(0,1),rep(1,1),prev[8:13]),
+                 c(rep(0,2),rep(1,1),prev[14:18]),c(rep(0,3),rep(1,1),prev[19:22]),
+                 c(rep(0,4),rep(1,1),prev[23:25]),c(rep(0,5),rep(1,1),prev[26:27]),
+                 c(rep(0,6),rep(1,1),prev[28]),c(rep(0,7),rep(1,1))))
+}
+a5 <- Reg1(mat53,cluster=5,gam=0.005)
+mat51 <- rbind(c(rep(1,1),a5[1:7]),c(rep(0,1),rep(1,1),a5[8:13]),
+                 c(rep(0,2),rep(1,1),a5[14:18]),c(rep(0,3),rep(1,1),a5[19:22]),
+                 c(rep(0,4),rep(1,1),a5[23:25]),c(rep(0,5),rep(1,1),a5[26:27]),
+                 c(rep(0,6),rep(1,1),a5[28]),c(rep(0,7),rep(1,1)))
+mat52 <- cbind(c(rep(0,1),a5[1:7]),c(rep(0,2),a5[8:13]),
+                 c(rep(0,3),a5[14:18]),c(rep(0,4),a5[19:22]),
+                 c(rep(0,5),a5[23:25]),c(rep(0,6),a5[26:27]),
+                 c(rep(0,7),a5[28]),c(rep(0,8)))
+mat5 <- mat51+mat52
+inv5 <- solve(mat5) 
+round(mat5,3)
+```
+
+Estimating partial correlation matrix for 6th cluster:
+
+```{r cluster6}
+mat63 <- function(prev)
+{
+  return(rbind(c(rep(1,1),prev[1:4]),c(rep(0,1),rep(1,1),prev[5:7]),
+                 c(rep(0,2),rep(1,1),prev[8:9]),c(rep(0,3),rep(1,1),prev[10]),
+                 c(rep(0,4),rep(1,1))))
+}
+a6 <- Reg1(mat63,cluster=6,gam=0.005)
+mat61 <- rbind(c(rep(1,1),a6[1:4]),c(rep(0,1),rep(1,1),a6[5:7]),
+                 c(rep(0,2),rep(1,1),a6[8:9]),c(rep(0,3),rep(1,1),a6[10]),
+                 c(rep(0,4),rep(1,1)))
+mat62 <- cbind(c(rep(0,1),a6[1:4]),c(rep(0,2),a6[5:7]),
+                 c(rep(0,3),a6[8:9]),c(rep(0,4),a6[10]),
+                 c(rep(0,5)))
+mat6 <- mat61+mat62
+inv6 <- solve(mat6) 
+round(mat6,3)
+```
+
+Estimating partial correlation matrix for 7th cluster:
+
+```{r cluster7}
+mat73 <- function(prev)
+{
+  return(rbind(c(rep(1,1),prev[1:2]),c(rep(0,1),rep(1,1),prev[3]),
+                 c(rep(0,2),rep(1,1))))
+}
+a7 <- Reg1(mat73,cluster=7,gam=0.005)
+mat71 <- rbind(c(rep(1,1),a7[1:2]),c(rep(0,1),rep(1,1),a7[3]),
+                 c(rep(0,2),rep(1,1)))
+mat72 <- cbind(c(rep(0,1),a7[1:2]),c(rep(0,2),a7[3]),
+                 c(rep(0,3)))
+mat7 <- mat71 + mat72
+inv7 <- solve(mat7) 
+round(mat7,3)
+```
+
+Estimating partial correlation matrix for 8th cluster:
+
+```{r cluster8}
+mat83 <- function(prev)
+{
+  return(rbind(c(rep(1,1),prev[1:2]),c(rep(0,1),rep(1,1),prev[3]),
+                 c(rep(0,2),rep(1,1))))
+}
+a8 <- Reg1(mat83,cluster=8,gam=0.005)
+mat81 <- rbind(c(rep(1,1),a8[1:2]),c(rep(0,1),rep(1,1),a8[3]),
+                 c(rep(0,2),rep(1,1)))
+mat82 <- cbind(c(rep(0,1),a8[1:2]),c(rep(0,2),a8[3]),
+                 c(rep(0,3)))
+mat8 <- mat81 + mat82
+inv8 <- solve(mat8) 
+round(mat8,3)
+```
+
+Estimating partial correlation matrix for 10th cluster:
+
+```{r cluster9}
+mat9 <- Reg(cluster=9,0.005)
+inv9 <- solve(mat9) 
+round(mat9,3)
+```
+
+Estimating partial correlation matrix for 11th cluster:
+
+```{r cluster11}
+mat11 <- Reg(cluster=11,0.005)
+inv11 <- solve(mat11) 
+round(mat11,3)
+```
+
+The block diagonal matrix for partial correlation is :
+
+
+```{r corr1}
+{
+  m1 <- cbind(mat1,matrix(0,2,48))
+  m2 <- cbind(matrix(0,10,2),mat2,matrix(0,10,38))
+  m3 <- cbind(matrix(0,11,12),mat3,matrix(0,11,27))
+  m4 <- cbind(matrix(0,3,23),mat4,matrix(0,3,24))
+  m5 <- cbind(matrix(0,8,26),mat5,matrix(0,8,16))
+  m6 <- cbind(matrix(0,5,34),mat6,matrix(0,5,11))
+  m7 <- cbind(matrix(0,3,39),mat7,matrix(0,3,8))
+  m8 <- cbind(matrix(0,3,42),mat8,matrix(0,3,5))
+  m9 <- cbind(matrix(0,2,45),mat9,matrix(0,2,3))
+  m10 <- cbind(matrix(0,1,47),1,matrix(0,1,2))
+  m11 <- cbind(matrix(0,2,48),mat11)
+  corr_mt1 <- round(rbind(m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11),digits=3)
+  corr_mt1
+  
+  #inverse of the partial correlation matrix
+  i1 <- cbind(inv1,matrix(0,2,48))
+  i2 <- cbind(matrix(0,10,2),inv2,matrix(0,10,38))
+  i3 <- cbind(matrix(0,11,12),inv3,matrix(0,11,27))
+  i4 <- cbind(matrix(0,3,23),inv4,matrix(0,3,24))
+  i5 <- cbind(matrix(0,8,26),inv5,matrix(0,8,16))
+  i6 <- cbind(matrix(0,5,34),inv6,matrix(0,5,11))
+  i7 <- cbind(matrix(0,3,39),inv7,matrix(0,3,8))
+  i8 <- cbind(matrix(0,3,42),inv8,matrix(0,3,5))
+  i9 <- cbind(matrix(0,2,45),inv9,matrix(0,2,3))
+  i10 <- cbind(matrix(0,1,47),1,matrix(0,1,2))
+  i11 <- cbind(matrix(0,2,48),inv11)
+  inv_mt1 <- round(rbind(i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11),digits=3)
+
+  
+}
+```
+
+
+The partial correlation matrix formed by the coordinate wise median of partial correlations of each cluster:
+
+```{r corr2}
+corr_mt2 <- round(diag(c(mat1[1,2],median(a2),median(a3),median(a4),median(a5),
+                 median(a6),median(a7),median(a8),mat9[1,2],1,mat11[1,2])),digits=3)
+corr_mt2
+#inverse of the partial correlation matrix
+inv_mt2 <- round(solve(corr_mt2),3)
+
+```
+
+Calculating portfolio weight vectors from estimated partial correlation matrices:
+```{r weight1}
+alpha <- t(matrix(1,ncol(value),1))%*%corr_mt1%*%matrix(1,ncol(value),1)
+wgt <- (corr_mt1%*%matrix(1,ncol(value),1))
+wei <- wgt/(50*as.numeric(alpha))  #weights using the 1st correlation matrix
+
+alpha2 <- t(matrix(1,11,1))%*%corr_mt2%*%matrix(1,11,1)
+wgt2 <- (corr_mt2%*%matrix(1,11,1))
+wei2 <- wgt2/(11*as.numeric(alpha))
+w <- numeric()
+for(i in 1:11)
+{
+  n <- which(grp429==i)
+  w <- c(w,rep(wei2[i],length(n)))   #weights using the 2nd correlation matrix
+}
+```
+
+
+Obtaining the partial correlation matrix for all the stocks as a whole i.e., without clustering:
+```{r full}
+matfull <- function(prev)
+{
+  b <- 0
+  x <- numeric()
+  for(i in 1:(ncol(val)-1))
+  {
+  
+    a <- b+1
+    
+    b <- a+(ncol(val)-i)-1
+    
+    x <- rbind(x,c(rep(0,i-1),rep(1,1),prev[a:b]))
+  }
+  x <- rbind(x,c(rep(0,ncol(val)-1),rep(1,1)))
+  return(x)
+}
+
+n2 <- c(1:50)
+tol <- 1e-5
+
+distance <- 1 + tol
+iter <- 0 
+  
+val <- value[,n2]
+Y1 <- numeric()
+current11 <- numeric()
+for(i in 1:ncol(val))
+{
+  current11[i] <- 1/var(val[,i])   #initial value of sigma
+  Y1 <- c(Y1,val[,i]/as.numeric(sqrt(current11[i])))
+}
+  
+X1 <- numeric()
+for(i in 1:ncol(val))
+{
+  for(j in 1:ncol(val))
+  {
+    if(i < j)
+    {
+      aer <- c(rep(0,(i-1)*nrow(val)),val[,i]*as.numeric(current11[i]/current11[j]),
+                 rep(0,(j-i-1)*nrow(val)),val[,j]*as.numeric(current11[j]/current11[i]),
+                 rep(0,(ncol(val)-j)*nrow(val)))
+        X1 <- cbind(X1,aer)
+    }
+    else
+    {
+      X1 <- X1
+    }
+  }
+}
+  
+  
+theta4 <- theta3(Y1,X1,gamma=gam)   #initial value of theta
+theta4
+  
+while(distance > tol)
+  {
+    iter <- iter + 1
+  
+    previous <- current11
+    prev <- theta4
+    mat <- matfull(prev)
+    be <- matrix(-1,length(n2),length(n2))
+    for(i in 1:ncol(val))
+    {
+      for(j in 1:ncol(val))
+      {
+        if(i!=j)
+        {
+          be[i,j] <- mat[min(i,j),max(i,j)]*sqrt(previous[j]/previous[i])
+        }
+          
+      }
+    
+    }
+    
+    for(i in 1:ncol(val))
+    {
+      current11[i] <- nrow(val)/((t(val%*%(-be[i,])))%*%(val%*%(-be[i,])))
+    }
+    Y1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      Y1 <- c(Y1,val[,i]/as.numeric(sqrt(current11[i])))
+    }
+    X1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      for(j in 1:ncol(val))
+      {
+        if(i < j)
+        {
+          aer <- c(rep(0,(i-1)*nrow(val)),val[,i]*as.numeric(current11[i]/current11[j]),
+                   rep(0,(j-i-1)*nrow(val)),val[,j]*as.numeric(current11[j]/current11[i]),
+                   rep(0,(ncol(val)-j)*nrow(val)))
+          X1 <- cbind(X1,aer)
+        }
+        else
+        {
+          X1 <- X1
+        }
+      }
+    }
+    theta4 <- theta3(Y1,X1,gamma=gam)
+    distance <- norm(previous - current11,"2")
+  }
+  theta4  
+  
+  
+matfull2 <- function(prev)
+{
+  b <- 0
+  x <- numeric()
+  for(i in 1:(ncol(val)-1))
+  {
+  
+    a <- b+1
+   
+    b <- a+(ncol(val)-i)-1
+    
+    x <- cbind(x,c(rep(0,i),prev[a:b]))
+  }
+  x <- cbind(x,c(rep(0,ncol(val))))
+  return(x)
+}
+matfi1 <- matfull(theta4) 
+dim(matfi1) 
+
+matfi2 <- matfull2(theta4)
+
+matfi <-matfi1+matfi2  #partial correlation matrix for all stocks together
+invmtf <- solve(matfi) #inverse of the partial correlation matrix
+alphaf <- t(matrix(1,ncol(value),1))%*%matfi%*%matrix(1,ncol(value),1)
+wgtf <- (matfi1%*%matrix(1,ncol(value),1))
+weif <- wgt/(50*as.numeric(alpha))  #calculating portfolio weights
+
+```
+
+
+```{r full2}
+
+#Using 1st partial correlation matrix
+
+#variance estimation error
+varest1 <- abs(((t(wei)%*%inv_mt1%*%wei)/(t(weif)%*%invmtf%*%weif))-1)
+varest1
+#risk estimation error
+riskest1 <- abs(t(wei)%*%(inv_mt1-invmtf)%*%wei)
+riskest1
+#portfolio weight estimation error
+portest1 <- norm(wei-weif,"1")
+portest
+
+
+#Using 2nd partial correlation matrix
+
+#variance estimation error
+varest2 <- abs(((t(wei2)%*%inv_mt2%*%wei2)/(t(weif)%*%invmtf%*%weif))-1)
+varest1
+#risk estimation error
+#riskest2 <- abs(t(wei2)%*%(inv_mt2-invmtf)%*%wei2)#not possible
+
+#portfolio weight estimation error
+portest2 <- norm(w-weif,"1")
+portest2
+```

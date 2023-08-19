@@ -1,0 +1,443 @@
+---
+title: "Simulation Clustering"
+output: html_document
+date: "2023-06-22"
+---
+```{r package}
+library(TSclust)
+library(cluster)
+library(factoextra)
+library(MASS)
+```
+
+The following function is used to generate the sample values.
+
+```{r ty1}
+generate1 <- function(mu1,n,p)
+{
+  Sigma1 <- matrix(0,p,p)
+  for(i in 1:p)
+  {
+    for(j in 1:p)
+    {
+      Sigma1[i,j] <- 0.15^abs(i-j)
+    }
+  }
+  X <- matrix(0,nrow=p,ncol=n)
+  for(i in 1:n)
+  {
+    X[,i] <- mvrnorm(1,mu=mu1,Sigma=Sigma1)
+  }
+  return(X)
+}
+```
+
+```{r tyr3}
+
+
+
+matfull3 <- function(n,prev)
+{
+  b <- 0
+  x <- numeric()
+  n1 <- which(grpnew==n)
+  for(i in 1:(length(n1)-1))
+  {
+  
+    a <- b+1
+    
+    b <- a+(length(n1)-i)-1
+    
+    x <- rbind(x,c(rep(0,i-1),rep(1,1),prev[a:b]))
+  }
+  x <- rbind(x,c(rep(0,length(n1)-1),rep(1,1)))
+  return(x)
+}
+matfull4 <- function(n,prev)
+{
+  b <- 0
+  x <- numeric()
+  n1 <- which(grpnew==n)
+  for(i in 1:(length(n1)-1))
+  {
+  
+    a <- b+1
+    
+    b <- a+(length(n1)-i)-1
+    
+    x <- cbind(x,c(rep(0,i),prev[a:b]))
+  }
+  x <- cbind(x,c(rep(0,length(n1))))
+  return(x)
+}
+
+
+theta3 <- function(Y,X,tol=1e-5,gamma)      #function for final value of theta
+{
+  distance <- tol + 1
+  iter <- 0
+  
+  fubc <- function(Y,X,gamma)        #function for initial value of theta 
+  {
+    a <- t(Y)%*%X
+    if(a > 0)
+    {
+      if(abs(t(Y)%*%X)-gamma>0)
+      {
+        a <- (abs(t(Y)%*%X)-gamma)/(t(X)%*%X)
+      }
+      else
+      {
+        a <- 0
+      }
+    }
+    else if(a < 0)
+    {
+      if(abs(t(Y)%*%X)-gamma>0)
+      {
+        a <- -(abs(t(Y)%*%X)-gamma)/(t(X)%*%X)
+      }
+      else
+      {
+        a <- 0
+      }
+    }
+    else
+    {
+      a <- 0
+    }
+    return(a)
+  }
+  
+  
+  theta <- numeric()
+  
+  for(i in 1:ncol(X))
+  {
+    theta[i] <- fubc(Y,X[,i],gamma)
+  }
+  
+  distance <- tol + 1
+  iter <- 0
+
+  
+  while(distance > tol)
+  {
+    iter <- iter + 1
+    
+    
+    previous <- theta
+    
+    
+  for(i in 1:ncol(X))
+  {
+  
+    
+      b <- ((t(Y-X%*%previous)%*%X[,i])/(t(X[,i])%*%X[,i]))+previous[i]
+      fu <- function(b)
+      {
+        if(b > 0)
+        {
+          if(b-(gamma/(t(X[,i])%*%X[,i]))>0)
+          {
+            b <- b-(gamma/(t(X[,i])%*%X[,i]))
+          }
+          else
+          {
+            b <- 0
+          }
+        }
+        else if(b < 0)
+        {
+          if(-b-(gamma/(t(X[,i])%*%X[,i]))>0)
+          {
+            b <- -(-(b)-(gamma/(t(X[,i])%*%X[,i])))
+          }
+          else
+          {
+            b <- 0
+          }
+        }
+        else
+        {
+          b <- 0
+        }
+      }
+      theta[i] <- fu(b)
+    }
+    distance <- norm(previous-theta,"2")
+    distance
+  }
+  return(theta)
+}
+```
+
+
+```{r next114}
+newfunc <- function(n,p,c,gamma)
+{
+   gam <- gamma
+   theta2 <- list()
+   mat2 <- list()
+   for(n in 1:c)
+   {
+      n2 <- which(grpnew==n)
+      if(length(n2) != 1)
+      {
+        tol <- 1e-5
+        distance <- 1 + tol
+        iter <- 0 
+
+        value1 <- t(value) 
+        val <- value1[,n2]
+        matfull <- function(prev)
+{
+  b <- 0
+  x <- numeric()
+  for(i in 1:(ncol(val)-1))
+  {
+  
+    a <- b+1
+    
+    b <- a+(ncol(val)-i)-1
+    
+    x <- rbind(x,c(rep(0,i-1),rep(1,1),prev[a:b]))
+  }
+  x <- rbind(x,c(rep(0,ncol(val)-1),rep(1,1)))
+  return(x)
+}
+        Y1 <- numeric()
+        current11 <- numeric()
+for(i in 1:ncol(val))
+{
+  current11[i] <- 1/var(val[,i])   #initial value of sigma
+  Y1 <- c(Y1,val[,i]*as.numeric(sqrt(current11[i])))
+}
+  
+X1 <- numeric()
+for(i in 1:ncol(val))
+{
+  for(j in 1:ncol(val))
+  {
+    if(i < j)
+    {
+      aer <- c(rep(0,(i-1)*nrow(val)),val[,j]*as.numeric(sqrt(current11[j])),
+                 rep(0,(j-i-1)*nrow(val)),val[,i]*as.numeric(sqrt(current11[i])),
+                 rep(0,(ncol(val)-j)*nrow(val)))
+        X1 <- cbind(X1,aer)
+    }
+    else
+    {
+      X1 <- X1
+    }
+  }
+}
+  
+
+theta41 <- theta3(Y1,X1,gamma=gam)   #initial value of theta
+  
+while(distance > tol)
+  {
+    iter <- iter + 1
+  
+    previous <- current11
+    prev <- theta41
+    
+    matnew <- matfull(prev)
+    
+    be <- matrix(-1,nrow(matnew),ncol(matnew))
+    for(i in 1:nrow(matnew))
+    {
+      for(j in 1:ncol(matnew))
+      {
+        if(i<j)
+        {
+          be[i,j] <- matnew[i,j]*as.numeric(sqrt(previous[j]/previous[i]))
+        }
+        else if(i > j)
+        {
+          be[i,j] <- matnew[j,i]*as.numeric(sqrt(previous[j]/previous[i]))
+        }
+        else
+        {
+          be[i,j] <- -1
+        }
+      }
+    
+    }
+    
+    ben <- t(-be)
+    for(i in 1:nrow(be))
+    {
+      sum <- 0
+      for(j in 1:ncol(be))
+      {
+        if(j != i)
+        {
+          sum = sum+be[i,j]%*%val[,j]
+        }
+        else
+          sum = sum
+      }
+      current11[i] <- nrow(val)/(norm(val[,i] - sum,"2"))^2
+    }
+    Y1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      Y1 <- c(Y1,val[,i]*as.numeric(sqrt(current11[i])))
+    }
+    X1 <- numeric()
+    for(i in 1:ncol(val))
+    {
+      for(j in 1:ncol(val))
+      {
+        if(i < j)
+        {
+          aer <- c(rep(0,(i-1)*nrow(val)),val[,j]*as.numeric(sqrt(current11[j])),
+                   rep(0,(j-i-1)*nrow(val)),val[,i]*as.numeric(sqrt(current11[i])),
+                   rep(0,(ncol(val)-j)*nrow(val)))
+          X1 <- cbind(X1,aer)
+        }
+        else
+        {
+          X1 <- X1
+        }
+      }
+    }
+    theta41 <- theta3(Y1,X1,gamma=gam)
+    distance <- norm(previous - current11,"2")
+}
+theta2[[n]] <- theta41
+mat2[[n]] <- matfull3(n,theta2[[n]]) + matfull4(n,theta2[[n]])
+  }
+else
+{
+  theta2[[n]] <- 1
+  mat2[[n]] <- as.matrix(1)
+}
+
+}
+
+n <- numeric()
+new <- list()
+sum <- rep(0,c)
+for(i in 1:c)
+{
+  n[i] <- length(which(grpnew==i))
+  sum[i] <- sum[i] + sum(n[1:i])
+}
+  
+
+new[[1]] <- cbind(mat2[[1]],matrix(0,n[1],p-n[1]))
+for(i in 2:c)
+{
+new[[i]] <- cbind(matrix(0,n[i],sum[i-1]),mat2[[i]],matrix(0,n[i],p-sum[i-1]-n[i]))
+  
+}
+omega11 <- numeric()
+for(i in 1:c)
+{
+  omega11 <- rbind(omega11,new[[i]])
+}
+
+new2 <- numeric()
+for(i in 1:c)
+{
+  new2 <- c(new2,rep(median(theta2[[i]]),ncol(mat2[[i]])))
+}
+omega21 <- diag(new2)
+
+new3 <- numeric()
+for(i in 1:c)
+{
+  new3 <- c(new3,median(theta2[[i]]))
+}
+omega31 <- diag(new3)
+
+Sigmaest <-solve(omega21)
+
+alphaf <- ((t(matrix(1,nrow(value),1))%*%omega11%*%matrix(1,nrow(value),1)))/p
+wgtf <- (omega11%*%matrix(1,nrow(value),1))
+weif <- wgtf/(p*as.numeric(alphaf))
+Sigma1 <- matrix(0,p,p)
+  for(i in 1:p)
+  {
+    for(j in 1:p)
+    {
+      Sigma1[i,j] <- 0.15^abs(i-j)
+    }
+  }
+omegat <- solve(Sigma1)
+alphat <- ((t(matrix(1,nrow(value),1))%*%omegat%*%matrix(1,nrow(value),1)))/p
+wgtft <- (omegat%*%matrix(1,nrow(value),1))
+weift <- wgtft/(p*as.numeric(alphat)) 
+
+
+varest1 <- abs(((t(weif)%*%Sigmaest%*%weif)/(t(weift)%*%Sigma1%*%weift))-1)
+varest1
+#risk estimation error
+riskest1 <- abs(t(weif)%*%(Sigmaest-Sigma1)%*%weif)
+riskest1
+#portfolio weight estimation error
+portest1 <- norm(weift-weif,"1")
+portest1
+
+return(c(varest1,  portest1, riskest1))
+#print("2nd type" : varest2, riskest2, portest2)
+
+}
+```
+We run the above function for different values of gamma, the tuning parameter which returns the corresponding values of variance estimation error,portfolio weight estimation errorand  risk estimation error respectively .
+
+Mu is 0 vector.
+
+1. n = 100
+   p = 50
+   
+   
+```{r nex21}
+
+n <- 100
+p <- 50
+
+set.seed(1)
+mu <- rep(0,p)
+value <- generate1(mu,n=100,p=50)
+fviz_nbclust(scale(value), kmeans, method = "silhouette",k.max=20)
+distnew <- diss(value,METHOD="PACF")     
+hcnew <- hclust(distnew)
+grpnew <- cutree(hcnew, k = 18)
+table(grpnew)
+c <- 18
+newfunc(n,p,c,gamma=0.05)
+newfunc(n,p,c,gamma=0.5)
+newfunc(n,p,c,gamma=5)
+newfunc(n,p,c,gamma=15)
+newfunc(n,p,c,gamma=25)
+newfunc(n,p,c,gamma=50)
+```
+
+2. n = 200
+   p = 100
+
+```{r next31}
+n <- 200
+p <- 100
+
+set.seed(1)
+mu <- rep(0,p)
+value <- generate1(mu,n=200,p=100)
+fviz_nbclust(scale(value), kmeans, method = "silhouette",k.max=30)
+distnew <- diss(value,METHOD="PACF")     
+hcnew <- hclust(distnew)
+grpnew <- cutree(hcnew, k = 27)
+table(grpnew)
+c <- 27
+
+newfunc(n,p,c,gamma=0.05)
+newfunc(n,p,c,gamma=0.5)
+newfunc(n,p,c,gamma=5)
+newfunc(n,p,c,gamma=15)
+newfunc(n,p,c,gamma=25)
+newfunc(n,p,c,gamma=50)
+```
